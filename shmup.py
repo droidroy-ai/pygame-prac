@@ -24,6 +24,14 @@ clock = pygame.time.Clock()
 folder_dir = os.path.dirname(__file__)
 img_dir = os.path.join(folder_dir, 'img')
 
+font_name = pygame.font.match_font('arial')
+def draw_text(surface, text: str, size: int, x, y):
+    font = pygame.font.Font(font_name, size)
+    text_surface = font.render(text, True, WHITE)
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (x, y)
+    surface.blit(text_surface, text_rect)
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -136,6 +144,8 @@ for i in range(8):
     all_sprites.add(m)
     mobs.add(m)
 
+# scoring related stuff
+score = 0 
 
 # Game loop
 running = True
@@ -156,6 +166,7 @@ while running:
     # check to see if a bullet hits a mob
     hits = pygame.sprite.groupcollide(mobs, bullets, True, True)
     for hit in hits:
+        score += 50 - hit.radius
         m = Mob()
         all_sprites.add(m)
         mobs.add(m)
@@ -169,6 +180,7 @@ while running:
     screen.fill(BLACK)
     screen.blit(background, background_rect)
     all_sprites.draw(screen)
+    draw_text(screen, str(score), 18, WIDTH / 2, 10)
     # *after* drawing everything, flip the display
     pygame.display.flip()
 
