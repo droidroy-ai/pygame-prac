@@ -36,6 +36,22 @@ def draw_text(surface, text: str, size: int, x, y):
     text_rect.midtop = (x, y)
     surface.blit(text_surface, text_rect)
 
+def draw_shield_bar(surface, x: int, y: int, pct: int):
+    if pct < 0: # no filling outside of the empty bar
+        pct = 0
+    BAR_LENGTH = 100
+    BAR_HEIGHT = 10
+    fill = (pct / 100) * BAR_LENGTH
+    outline_rect = pygame.Rect(x, y, BAR_LENGTH, BAR_HEIGHT)
+    fill_rect = pygame.Rect(x, y, fill, BAR_HEIGHT)
+    pygame.draw.rect(surface, GREEN, fill_rect)
+    pygame.draw.rect(surface, WHITE, outline_rect, 2)
+
+def spawn_mob():
+    m = Mob()
+    all_sprites.add(m)
+    mobs.add(m)
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -48,6 +64,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.centerx = WIDTH / 2
         self.rect.bottom = HEIGHT - 10
         self.speedx = 0
+        self.shield = 100
 
     def update(self):
         self.speedx = 0
@@ -154,9 +171,7 @@ bullets = pygame.sprite.Group()
 player = Player()
 all_sprites.add(player)
 for i in range(8):
-    m = Mob()
-    all_sprites.add(m)
-    mobs.add(m)
+    spawn_mob()
 
 # scoring related stuff
 score = 0 
@@ -183,20 +198,22 @@ while running:
     for hit in hits:
         score += 50 - hit.radius
         random.choice(explosion_sounds).play()
-        m = Mob()
-        all_sprites.add(m)
-        mobs.add(m)
+        spawn_mob()
 
     # check to see if a mob hits the player
-    hits = pygame.sprite.spritecollide(player, mobs, False, pygame.sprite.collide_circle)
-    if hits:
-        running = False
+    hits = pygame.sprite.spritecollide(player, mobs, True, pygame.sprite.collide_circle)
+    for hit in  hits:
+        player.shield -= hit.radius * 2
+        spawn_mob()
+        if player.shield <= 0:
+            running = False
 
-    # Draw /render
+    # Draw / render
     screen.fill(BLACK)
     screen.blit(background, background_rect)
     all_sprites.draw(screen)
     draw_text(screen, str(score), 18, WIDTH / 2, 10)
+    draw_shield_bar(screen, 5, 5, player.shield)
     # *after* drawing everything, flip the display
     pygame.display.flip()
 
