@@ -65,6 +65,8 @@ class Player(pygame.sprite.Sprite):
         self.rect.bottom = HEIGHT - 10
         self.speedx = 0
         self.shield = 100
+        self.shoot_delay = 250
+        self.last_shot = pygame.time.get_ticks()
 
     def update(self):
         self.speedx = 0
@@ -73,6 +75,8 @@ class Player(pygame.sprite.Sprite):
             self.speedx = -5
         if keystate[pygame.K_RIGHT]:
             self.speedx = 5
+        if keystate[pygame.K_SPACE]:
+            self.shoot()
         self.rect.x += self.speedx
 
         if self.rect.right > WIDTH:
@@ -81,10 +85,14 @@ class Player(pygame.sprite.Sprite):
             self.rect.left = 0
 
     def shoot(self):
-        bullet = Bullet(self.rect.centerx, self.rect.top)
-        all_sprites.add(bullet)
-        bullets.add(bullet)
-        shoot_sound.play()
+        # bullets are fired with a delay with self.shoot_delay
+        now = pygame.time.get_ticks()
+        if now - self.last_shot > self.shoot_delay:
+            self.last_shot = now
+            bullet = Bullet(self.rect.centerx, self.rect.top)
+            all_sprites.add(bullet)
+            bullets.add(bullet)
+            shoot_sound.play()
 
 
 class Mob(pygame.sprite.Sprite):
@@ -187,16 +195,13 @@ while running:
         # check for closing the window
         if event.type == pygame.QUIT:
             running = False
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                player.shoot()
     # Update
     all_sprites.update()
 
     # check to see if a bullet hits a mob
     hits = pygame.sprite.groupcollide(mobs, bullets, True, True)
     for hit in hits:
-        score += 50 - hit.radius
+        score += 50 - hit.radius # scoring is relative to the radius of the meteor 
         random.choice(explosion_sounds).play()
         spawn_mob()
 
