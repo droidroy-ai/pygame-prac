@@ -1,6 +1,7 @@
 # Frozen Jam by tgfcoder <https://twitter.com/tgfcoder> licensed under CC-BY-3 <http://creativecommons.org/licenses/by/3.0/>
 # Art from Kenney.nl
 
+from typing import Any
 import pygame
 import random
 import os
@@ -150,6 +151,31 @@ class Bullet(pygame.sprite.Sprite):
             self.kill()
 
 
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, center, size):
+        super().__init__()
+        self.size = size
+        self.image = explosion_anim[self.size][0]
+        self.rect = self.image.get_rect()
+        self.rect.center = center
+        self.frame = 0
+        self.last_update = pygame.time.get_ticks()
+        self.frame_rate = 30
+
+    def update(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_update > self.frame_rate:
+            self.last_update = now
+            self.frame += 1
+            if self.frame == len(explosion_anim[self.size]):
+                self.kill()
+            else:
+                center = self.rect.center
+                self.image = explosion_anim[self.size][self.frame]
+                self.rect = self.image.get_rect()
+                self.rect.center = center
+
+
 # Load all game graphics
 background = pygame.image.load(os.path.join(img_dir, 'starfield.png')).convert()
 background_rect = background.get_rect()
@@ -163,6 +189,18 @@ meteor_list = ['meteorGrey_big1.png', 'meteorGrey_big2.png',
                'meteorGrey_tiny1.png']
 for img in meteor_list:
     meteor_images.append(pygame.image.load(os.path.join(img_dir, img)).convert())
+
+explosion_anim = {}
+explosion_anim['lg'] = []
+explosion_anim['sm'] = []
+for i in range(1, 5):
+    filename = f'explosion0{i}.png'
+    img = pygame.image.load(os.path.join(img_dir, filename)).convert()
+    img.set_colorkey(BLACK)
+    img_lg = pygame.transform.scale(img, (70, 70))
+    explosion_anim['lg'].append(img_lg)
+    img_sm = pygame.transform.scale(img, (30, 30))
+    explosion_anim['sm'].append(img_sm)
 
 # Load all the game sounds
 pygame.mixer.music.load(os.path.join(snd_dir, 'tgfcoder-FrozenJam-SeamlessLoop.ogg'))
@@ -203,12 +241,16 @@ while running:
     for hit in hits:
         score += 50 - hit.radius # scoring is relative to the radius of the meteor 
         random.choice(explosion_sounds).play()
+        explosion = Explosion(hit.rect.center, 'lg')
+        all_sprites.add(explosion)
         spawn_mob()
 
     # check to see if a mob hits the player
     hits = pygame.sprite.spritecollide(player, mobs, True, pygame.sprite.collide_circle)
     for hit in  hits:
         player.shield -= hit.radius * 2
+        explosion = Explosion(hit.rect.center, 'sm')
+        all_sprites.add(explosion)
         spawn_mob()
         if player.shield <= 0:
             running = False
