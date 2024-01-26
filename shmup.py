@@ -193,10 +193,12 @@ meteor_list = ['meteorGrey_big1.png', 'meteorGrey_big2.png',
 for img in meteor_list:
     meteor_images.append(pygame.image.load(os.path.join(img_dir, img)).convert())
 
-# explosion sprites
+# explosion sprites for meteors
 explosion_anim = {}
 explosion_anim['lg'] = []
 explosion_anim['sm'] = []
+# explosion sprites for player
+explosion_anim['player'] = []
 for i in range(1, 5):
     filename = f'explosion0{i}.png'
     img = pygame.image.load(os.path.join(img_dir, filename)).convert()
@@ -205,6 +207,8 @@ for i in range(1, 5):
     explosion_anim['lg'].append(img_lg)
     img_sm = pygame.transform.scale(img, (30, 28))
     explosion_anim['sm'].append(img_sm)
+    img_mid = pygame.transform.scale(img, (140, 130))
+    explosion_anim['player'].append(img_mid)
 
 # Load all the game sounds
 pygame.mixer.music.load(os.path.join(snd_dir, 'tgfcoder-FrozenJam-SeamlessLoop.ogg'))
@@ -257,7 +261,14 @@ while running:
         all_sprites.add(explosion)
         spawn_mob()
         if player.shield <= 0:
-            running = False
+            death_explosion = Explosion(player.rect.center, 'player')
+            all_sprites.add(death_explosion)
+            # removing the player so no visual clash with explosion
+            player.kill()
+
+    # if the player died and the explosion anim has finished playing
+    if not player.alive() and not death_explosion.alive():
+        running = False
 
     # Draw / render
     screen.fill(BLACK)
