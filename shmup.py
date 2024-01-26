@@ -48,6 +48,14 @@ def draw_shield_bar(surface, x: int, y: int, pct: int):
     pygame.draw.rect(surface, GREEN, fill_rect)
     pygame.draw.rect(surface, WHITE, outline_rect, 2)
 
+def draw_lives(surface, x, y, lives, img):
+    """"""
+    for i in range(lives):
+        img_rect = img.get_rect()
+        img_rect.x = x  + 30 * i
+        img_rect.y = y
+        surface.blit(img, img_rect)
+
 def spawn_mob():
     m = Mob()
     all_sprites.add(m)
@@ -70,8 +78,19 @@ class Player(pygame.sprite.Sprite):
         self.shoot_delay = 250 
         # the time we last shot
         self.last_shot = pygame.time.get_ticks()
+        # Number of player lives
+        self.lives = 3
+        self.hidden = False
+        # Timer to control how long the player is hidden
+        self.hide_timer = pygame.time.get_ticks()
 
     def update(self):
+        # check to see if it time to unhide if player is hidden
+        if self.hidden and pygame.time.get_ticks() - self.hide_timer > 1000:
+            self.hidden = False
+            self.rect.centerx = WIDTH / 2 
+            self.rect.bottom = HEIGHT - 10
+
         self.speedx = 0
         keystate = pygame.key.get_pressed()
         if keystate[pygame.K_LEFT]:
@@ -96,6 +115,12 @@ class Player(pygame.sprite.Sprite):
             all_sprites.add(bullet)
             bullets.add(bullet)
             shoot_sound.play()
+
+    def hide(self):
+        """ Temporarily hide the player """
+        self.hidden = True
+        self.hide_timer = pygame.time.get_ticks()
+        self.rect.center = (WIDTH / 2, HEIGHT + 200)
 
 
 class Mob(pygame.sprite.Sprite):
@@ -182,7 +207,10 @@ class Explosion(pygame.sprite.Sprite):
 # Load all game graphics
 background = pygame.image.load(os.path.join(img_dir, 'starfield.png')).convert()
 background_rect = background.get_rect()
+# player sprite
 player_img = pygame.image.load(os.path.join(img_dir, 'playerShip1_blue.png')).convert()
+player_mini_img = pygame.transform.scale(player_img, (25, 19))
+player_mini_img.set_colorkey(BLACK)
 # meteor_img = pygame.image.load(os.path.join(img_dir, 'meteorGrey_med1.png')).convert()
 bullet_img = pygame.image.load(os.path.join(img_dir, 'laserRed16.png')).convert()
 meteor_images = []
@@ -218,6 +246,7 @@ shoot_sound = pygame.mixer.Sound(os.path.join(snd_dir, 'pew.wav'))
 explosion_sounds = []
 for snd in ['explosion_1.wav', 'explosion_2.wav']:
     explosion_sounds.append(pygame.mixer.Sound(os.path.join(snd_dir, snd)))
+player_die_sound = pygame.mixer.Sound(os.path.join(snd_dir, 'player_die.wav'))
 
 all_sprites = pygame.sprite.Group()
 mobs = pygame.sprite.Group()
@@ -261,13 +290,16 @@ while running:
         all_sprites.add(explosion)
         spawn_mob()
         if player.shield <= 0:
+            player_die_sound.play()
             death_explosion = Explosion(player.rect.center, 'player')
             all_sprites.add(death_explosion)
-            # removing the player so no visual clash with explosion
-            player.kill()
+            # hiding the player so no visual clash with explosion
+            player.hide()
+            player.lives -= 1
+            player.shield = 100
 
     # if the player died and the explosion anim has finished playing
-    if not player.alive() and not death_explosion.alive():
+    if player.lives == 0 and not death_explosion.alive():
         running = False
 
     # Draw / render
@@ -276,6 +308,7 @@ while running:
     all_sprites.draw(screen)
     draw_text(screen, str(score), 18, WIDTH / 2, 10)
     draw_shield_bar(screen, 5, 5, player.shield)
+    draw_lives(screen, WIDTH - 100, 5, player.lives, player_mini_img)
     # *after* drawing everything, flip the display
     pygame.display.flip()
 
