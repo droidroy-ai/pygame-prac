@@ -66,7 +66,9 @@ class Player(pygame.sprite.Sprite):
         self.rect.bottom = HEIGHT - 10
         self.speedx = 0
         self.shield = 100
-        self.shoot_delay = 250
+        # how long to wait in between each time it shoots in ms
+        self.shoot_delay = 250 
+        # the time we last shot
         self.last_shot = pygame.time.get_ticks()
 
     def update(self):
@@ -160,6 +162,7 @@ class Explosion(pygame.sprite.Sprite):
         self.rect.center = center
         self.frame = 0
         self.last_update = pygame.time.get_ticks()
+        # To control how quickly the explosion animation happens
         self.frame_rate = 30
 
     def update(self):
@@ -190,6 +193,7 @@ meteor_list = ['meteorGrey_big1.png', 'meteorGrey_big2.png',
 for img in meteor_list:
     meteor_images.append(pygame.image.load(os.path.join(img_dir, img)).convert())
 
+# explosion sprites
 explosion_anim = {}
 explosion_anim['lg'] = []
 explosion_anim['sm'] = []
@@ -197,9 +201,9 @@ for i in range(1, 5):
     filename = f'explosion0{i}.png'
     img = pygame.image.load(os.path.join(img_dir, filename)).convert()
     img.set_colorkey(BLACK)
-    img_lg = pygame.transform.scale(img, (70, 70))
+    img_lg = pygame.transform.scale(img, (70, 65))
     explosion_anim['lg'].append(img_lg)
-    img_sm = pygame.transform.scale(img, (30, 30))
+    img_sm = pygame.transform.scale(img, (30, 28))
     explosion_anim['sm'].append(img_sm)
 
 # Load all the game sounds
