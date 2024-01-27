@@ -9,6 +9,7 @@ import os
 WIDTH = 480
 HEIGHT = 600
 FPS = 60
+POWERUP_TIME = 5000
 
 # define colors
 WHITE = (255, 255, 255)
@@ -83,8 +84,16 @@ class Player(pygame.sprite.Sprite):
         self.hidden = False
         # Timer to control how long the player is hidden
         self.hide_timer = pygame.time.get_ticks()
+        self.power_level = 1
+        # keeping track of when we picked up the power up
+        self.power_time = pygame.time.get_ticks()
 
     def update(self):
+        # timeout for power ups
+        if self.power_level >= 2 and pygame.time.get_ticks() - self.power_time > POWERUP_TIME:
+            self.power_level -= 1
+            self.power_time = pygame.time.get_ticks()  
+
         # check to see if it time to unhide if player is hidden
         if self.hidden and pygame.time.get_ticks() - self.hide_timer > 1000:
             self.hidden = False
@@ -106,15 +115,30 @@ class Player(pygame.sprite.Sprite):
         if self.rect.left < 0:
             self.rect.left = 0
 
+    def powerup(self):
+        self.power_level += 1
+        self.power_time = pygame.time.get_ticks()
+
     def shoot(self):
         # bullets are fired with a delay with self.shoot_delay
         now = pygame.time.get_ticks()
         if now - self.last_shot > self.shoot_delay:
             self.last_shot = now
-            bullet = Bullet(self.rect.centerx, self.rect.top)
-            all_sprites.add(bullet)
-            bullets.add(bullet)
-            shoot_sound.play()
+            # number of bullets at a time depends on power level
+            if self.power_level == 1:
+                bullet = Bullet(self.rect.centerx, self.rect.top)
+                all_sprites.add(bullet)
+                bullets.add(bullet)
+                shoot_sound.play()
+            if self.power_level >= 2:
+                bullet1 = Bullet(self.rect.left, self.rect.centery)
+                bullet2 = Bullet(self.rect.right, self.rect.centery)
+                all_sprites.add(bullet1)
+                all_sprites.add(bullet2)
+                bullets.add(bullet1)
+                bullets.add(bullet2)
+                shoot_sound.play()
+
 
     def hide(self):
         """ Temporarily hide the player """
@@ -265,6 +289,9 @@ pygame.mixer.music.load(os.path.join(snd_dir, 'tgfcoder-FrozenJam-SeamlessLoop.o
 pygame.mixer.music.set_volume(0.4)
 
 shoot_sound = pygame.mixer.Sound(os.path.join(snd_dir, 'pew.wav'))
+shield_sound = pygame.mixer.Sound(os.path.join(snd_dir, 'pow4.wav'))
+power_sound = pygame.mixer.Sound(os.path.join(snd_dir, 'pow5.wav'))
+
 explosion_sounds = []
 for snd in ['explosion_1.wav', 'explosion_2.wav']:
     explosion_sounds.append(pygame.mixer.Sound(os.path.join(snd_dir, snd)))
@@ -303,7 +330,7 @@ while running:
         random.choice(explosion_sounds).play()
         explosion = Explosion(hit.rect.center, 'lg')
         all_sprites.add(explosion)
-        if random.random() > 0.5:
+        if random.random() > 0.9:
             power_up = PowerUp(hit.rect.center)
             all_sprites.add(power_up)
             power_ups.add(power_up)
@@ -330,10 +357,12 @@ while running:
     for hit in hits:
         if hit.type == 'shield':
             player.shield += random.randrange(10, 30)
+            shield_sound.play()
             if player.shield >= 100:
                 player.shield = 100
         if hit.type == 'gun':
-            pass
+            player.powerup()
+            power_sound.play()
 
     # if the player died and the explosion anim has finished playing
     if player.lives == 0 and not death_explosion.alive():
