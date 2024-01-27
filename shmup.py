@@ -62,6 +62,25 @@ def spawn_mob():
     all_sprites.add(m)
     mobs.add(m)
 
+def show_game_over_screen():
+    screen.blit(background, background_rect)
+    draw_text(screen, "SHMUP!", 64, WIDTH / 2, HEIGHT / 4)
+    draw_text(screen, 
+              "Arrow keys to move, Space to fire",
+              22, WIDTH / 2, HEIGHT / 2)
+    draw_text(screen, 
+              "Press a key to start", 18,
+              WIDTH / 2, HEIGHT * 3 / 4)
+    pygame.display.flip()
+    waiting = True
+    while waiting:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.KEYUP:
+                waiting = False
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -297,22 +316,27 @@ for snd in ['explosion_1.wav', 'explosion_2.wav']:
     explosion_sounds.append(pygame.mixer.Sound(os.path.join(snd_dir, snd)))
 player_die_sound = pygame.mixer.Sound(os.path.join(snd_dir, 'player_die.wav'))
 
-all_sprites = pygame.sprite.Group()
-mobs = pygame.sprite.Group()
-bullets = pygame.sprite.Group()
-power_ups = pygame.sprite.Group()
-player = Player()
-all_sprites.add(player)
-for i in range(8):
-    spawn_mob()
-
-# scoring related stuff
-score = 0 
 
 pygame.mixer.music.play(loops=-1) # plays the background music
 # Game loop
+game_over = True
 running = True
 while running:
+    if game_over:
+        show_game_over_screen()
+        game_over = False
+        all_sprites = pygame.sprite.Group()
+        mobs = pygame.sprite.Group()
+        bullets = pygame.sprite.Group()
+        power_ups = pygame.sprite.Group()
+        player = Player()
+        all_sprites.add(player)
+        for i in range(8):
+            spawn_mob()
+
+        # scoring related stuff
+        score = 0 
+
     # keep loop running at the right speed
     clock.tick(FPS)
     # Process input (events)
@@ -366,7 +390,7 @@ while running:
 
     # if the player died and the explosion anim has finished playing
     if player.lives == 0 and not death_explosion.alive():
-        running = False
+        game_over = True
 
     # Draw / render
     screen.fill(BLACK)
