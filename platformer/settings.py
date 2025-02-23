@@ -11,3 +11,7 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
+
+# Player properties
+PLAYER_ACCELERATION = 0.5
+PLAYER_FRICTION = -0.12
