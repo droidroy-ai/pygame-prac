@@ -1,8 +1,8 @@
 # Game options / settings
-TITLE = "some game"
-WIDTH = 360
-HEIGHT = 480
-FPS = 30
+TITLE = "Jump! Woot! Woot!"
+WIDTH = 480
+HEIGHT = 600
+FPS = 60
 
 # define colors
 WHITE = (255, 255, 255)
