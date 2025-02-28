@@ -19,7 +19,7 @@ class Game:
         # resets the game and start a new game
         self.all_sprites = pg.sprite.Group()
         self.platforms = pg.sprite.Group()
-        self.player = Player()
+        self.player = Player(self)
         self.all_sprites.add(self.player)
         p1 = Platform(0, HEIGHT - 40, WIDTH, 40)
         self.platforms.add(p1)
@@ -41,11 +41,12 @@ class Game:
     def update(self):
         # Game loop - update
         self.all_sprites.update()
-        # checking collision between player and platform
-        hits = pg.sprite.spritecollide(self.player, self.platforms, False)
-        if hits:
-            self.player.pos.y = hits[0].rect.top
-            self.player.velocity.y = 0
+        # checking collision between player and platform - only if falling
+        if self.player.velocity.y > 0:
+            hits = pg.sprite.spritecollide(self.player, self.platforms, False)
+            if hits:
+                self.player.pos.y = hits[0].rect.top
+                self.player.velocity.y = 0
 
     def events(self):
         # Game loop - event
@@ -55,6 +56,9 @@ class Game:
                 if self.playing:
                     self.playing = False
                 self.running = False
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_SPACE:
+                    self.player.jump()
 
     def draw(self):
         # Game loop - draw
