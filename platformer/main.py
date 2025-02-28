@@ -21,12 +21,10 @@ class Game:
         self.platforms = pg.sprite.Group()
         self.player = Player(self)
         self.all_sprites.add(self.player)
-        p1 = Platform(0, HEIGHT - 40, WIDTH, 40)
-        self.platforms.add(p1)
-        self.all_sprites.add(p1)
-        p2 = Platform(WIDTH / 2 - 50, HEIGHT * 3/4, 100, 20)
-        self.platforms.add(p2)
-        self.all_sprites.add(p2)
+        for platform in PLATFORM_LIST:
+            p = Platform(*platform)
+            self.platforms.add(p)
+            self.all_sprites.add(p)
         self.run()
 
     def run(self):
